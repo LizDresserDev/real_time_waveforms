@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:real_time_waveforms/ecg_simulator.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +34,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final int pixelsPerMs = 7;
+  final int pixelsPerMs = 2;
   int msOverPage = 0;
   final int durationInMs = 100;
   List<double?> samples = [];
@@ -41,23 +42,22 @@ class _MyHomePageState extends State<MyHomePage> {
   Timer? timer;
   int replacementIndex = 0;
 
+  ECGSimulator ecgSimulator = ECGSimulator();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       msOverPage = (MediaQuery.of(context).size.width / pixelsPerMs).floor();
       samples = List.generate(msOverPage, (_) => null);
-      startGeneratingFakeData();
+      // startGeneratingFakeData();
     });
-  }
 
-  void startGeneratingFakeData() {
-    timer = Timer.periodic(Duration(milliseconds: durationInMs), (timer) {
+    // Listen to the streamed ECG data
+    ecgSimulator.ecgStream.listen((data) {
+      print("ECG Data: ${data.toStringAsFixed(3)}");
       setState(() {
-        // Add a new random value between -1.0 and 1.0
-        final double randomValue = random.nextDouble() * 2 - 1;
-
-        samples[replacementIndex] = randomValue;
+        samples[replacementIndex] = data;
         const int nextXMany = 5;
 
         if (replacementIndex + nextXMany < msOverPage - 1) {
@@ -110,7 +110,7 @@ class WaveformPainter extends CustomPainter {
       ..strokeWidth = 2.0
       ..style = PaintingStyle.fill;
 
-    const double radius = 3;
+    const double radius = 2;
     final Path firstPath = Path();
     Path? secondPath;
 
